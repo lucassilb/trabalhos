@@ -36,3 +36,32 @@ def interface():
                 print("Nenhuma tarefa cadastrada.")
             else:
                 listar_tarefas(tarefas)
+        elif opcao == "3":
+            listar_tarefas(tarefas)
+
+            indice = int(input("Digite o número da tarefa que deseja atualizar: ")) - 1
+            nova_descricao = input("Nova descrição: ")
+            nova_data = input("Nova data de vencimento: ")
+            novo_status = input("Novo status: ")
+
+            atualizar_tarefa(tarefas, indice, nova_descricao, nova_data, novo_status)
+            print("Tarefa atualizada com sucesso!")
+
+        elif opcao == "4":
+            listar_tarefas(tarefas)
+
+            indice = int(input("Digite o número da tarefa que deseja remover: ")) - 1
+            remover_tarefa(tarefas, indice)
+            print("Tarefa removida com sucesso!")
+
+        elif opcao == "5":
+            salvar_tarefas(tarefas)
+            print("Tarefas salvas. Saindo do sistema...")
+            break
+
+        else:
+            print("Opção inválida. Tente novamente.")
+
+
+if name == "main":
+    interface()        
