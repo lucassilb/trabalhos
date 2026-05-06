@@ -1,67 +1,140 @@
+from datetime import datetime
+
+from persistencia import carregar_tarefas, salvar_tarefas
 from tarefas import (
+    FORMATO_DATA,
+    STATUS_VALIDOS,
+    atualizar_tarefa,
     cadastrar_tarefa,
     listar_tarefas,
-    atualizar_tarefa,
-    remover_tarefa
+    remover_tarefa,
 )
-from persistencia import carregar_tarefas, salvar_tarefas
 
 
-def mostrar_menu():
-    print("\n===== SISTEMA DE GERENCIAMENTO DE TAREFAS =====")
-    print("1 - Cadastrar tarefa")
-    print("2 - Listar tarefas")
-    print("3 - Atualizar tarefa")
-    print("4 - Remover tarefa")
-    print("5 - Salvar e sair")
+def ler_data(mensagem, obrigatoria=True):
+    while True:
+        valor = input(mensagem).strip()
+        if not valor and not obrigatoria:
+            return None
+        try:
+            datetime.strptime(valor, FORMATO_DATA)
+            return valor
+        except ValueError:
+            print("Data invalida. Use o formato AAAA-MM-DD.")
 
 
-def interface():
+def ler_status(mensagem, obrigatorio=True):
+    while True:
+        valor = input(mensagem).strip().lower()
+        if not valor and not obrigatorio:
+            return None
+        if valor in STATUS_VALIDOS:
+            return valor
+        print("Status invalido. Opcoes: pendente, em andamento, concluida.")
+
+
+def ler_id():
+    while True:
+        try:
+            return int(input("ID da tarefa: ").strip())
+        except ValueError:
+            print("Digite um numero inteiro para o ID.")
+
+
+def imprimir_tarefas(tarefas_filtradas):
+    if not tarefas_filtradas:
+        print("Nenhuma tarefa encontrada.")
+        return
+
+    print("\nID | Vencimento | Status        | Descricao")
+    print("-" * 70)
+    for tarefa in tarefas_filtradas:
+        print(
+            f"{tarefa['id']:>2} | {tarefa['data_vencimento']} | "
+            f"{tarefa['status']:<13} | {tarefa['descricao']}"
+        )
+
+
+def menu():
     tarefas = carregar_tarefas()
 
     while True:
-        mostrar_menu()
-        opcao = input("Escolha uma opção: ")
+        print("\nSistema de Gerenciamento de Tarefas")
+        print("1. Cadastrar tarefa")
+        print("2. Listar tarefas")
+        print("3. Atualizar tarefa")
+        print("4. Remover tarefa")
+        print("5. Sair")
 
-        if opcao == "1":
-            descricao = input("Descrição da tarefa: ")
-            data_vencimento = input("Data de vencimento: ")
-            status = input("Status (pendente / em andamento / concluída): ")
+        opcao = input("Escolha uma opcao: ").strip()
 
-            cadastrar_tarefa(tarefas, descricao, data_vencimento, status)
-            print("Tarefa cadastrada com sucesso!")
+        try:
+            if opcao == "1":
+                descricao = input("Descricao: ")
+                data_vencimento = ler_data("Data de vencimento (AAAA-MM-DD): ")
+                status = ler_status(
+                    "Status (pendente/em andamento/concluida): "
+                )
+                tarefa = cadastrar_tarefa(
+                    tarefas,
+                    descricao,
+                    data_vencimento or "",
+                    status or "pendente",
+                )
+                salvar_tarefas(tarefas)
+                print(f"Tarefa cadastrada com ID {tarefa['id']}.")
 
-        elif opcao == "2":
-            if not tarefas:
-                print("Nenhuma tarefa cadastrada.")
+            elif opcao == "2":
+                print("Filtros opcionais. Pressione Enter para ignorar.")
+                status = ler_status(
+                    "Filtrar por status (pendente/em andamento/concluida): ",
+                    obrigatorio=False,
+                )
+                data_vencimento = ler_data(
+                    "Filtrar por data de vencimento (AAAA-MM-DD): ",
+                    obrigatoria=False,
+                )
+                imprimir_tarefas(listar_tarefas(tarefas, status, data_vencimento))
+
+            elif opcao == "3":
+                tarefa_id = ler_id()
+                print("Novos dados. Pressione Enter para manter o valor atual.")
+                descricao = input("Nova descricao: ").strip() or None
+                data_vencimento = ler_data(
+                    "Nova data de vencimento (AAAA-MM-DD): ",
+                    obrigatoria=False,
+                )
+                status = ler_status(
+                    "Novo status (pendente/em andamento/concluida): ",
+                    obrigatorio=False,
+                )
+                tarefa = atualizar_tarefa(
+                    tarefas,
+                    tarefa_id,
+                    descricao=descricao,
+                    data_vencimento=data_vencimento,
+                    status=status,
+                )
+                salvar_tarefas(tarefas)
+                print(f"Tarefa {tarefa['id']} atualizada.")
+
+            elif opcao == "4":
+                tarefa_id = ler_id()
+                tarefa = remover_tarefa(tarefas, tarefa_id)
+                salvar_tarefas(tarefas)
+                print(f"Tarefa {tarefa['id']} removida.")
+
+            elif opcao == "5":
+                salvar_tarefas(tarefas)
+                print("Dados salvos. Encerrando.")
+                break
+
             else:
-                listar_tarefas(tarefas)
-        elif opcao == "3":
-            listar_tarefas(tarefas)
+                print("Opcao invalida.")
 
-            indice = int(input("Digite o número da tarefa que deseja atualizar: ")) - 1
-            nova_descricao = input("Nova descrição: ")
-            nova_data = input("Nova data de vencimento: ")
-            novo_status = input("Novo status: ")
-
-            atualizar_tarefa(tarefas, indice, nova_descricao, nova_data, novo_status)
-            print("Tarefa atualizada com sucesso!")
-
-        elif opcao == "4":
-            listar_tarefas(tarefas)
-
-            indice = int(input("Digite o número da tarefa que deseja remover: ")) - 1
-            remover_tarefa(tarefas, indice)
-            print("Tarefa removida com sucesso!")
-
-        elif opcao == "5":
-            salvar_tarefas(tarefas)
-            print("Tarefas salvas. Saindo do sistema...")
-            break
-
-        else:
-            print("Opção inválida. Tente novamente.")
+        except ValueError as erro:
+            print(f"Erro: {erro}")
 
 
-if name == "main":
-    interface()        
+if __name__ == "__main__":
+    menu()

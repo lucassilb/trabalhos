@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "descricao": "Escrever codigos python",
+    "data_vencimento": "2026-05-05",
+    "status": "pendente"
+  },
+  {
+    "id": 2,
+    "descricao": "Ir na fiap",
+    "data_vencimento": "2026-05-05",
+    "status": "pendente"
+  }
+]
